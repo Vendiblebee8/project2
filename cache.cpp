@@ -76,16 +76,16 @@ int Cache::dirM(int cacheE){
 
 int Cache::setA(int entriesA){
     const int cacheR = 512 / entriesA;
-    const int lnCacheRowLength = 3 * entriesA;
+    const int cacheRL = 3 * entriesA;
     hits = 0;
     int **pageT = new int*[cacheR];
     for(int i = 0; i < cacheR; i++)
     {
-        pageT[i] = new int[lnCacheRowLength];
+        pageT[i] = new int[cacheRL];
     }
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < lnCacheRowLength; j++)
+        for(int j = 0; j < cacheRL; j++)
         {
             pageT[i][j] = 0;
         }
@@ -96,50 +96,50 @@ int Cache::setA(int entriesA){
         int blockA = floor(cur->second / BLOCK_SIZE);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
-        int *pageTRow = pageT[pageL];
-        bool lbEntryFound = false;
-        for(int i = 0; i < lnCacheRowLength; i += lnCacheRowLength / entriesA)
+        int *pageTR = pageT[pageL];
+        bool entryE = false;
+        for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
         {
-            if(pageTRow[i] == 1)
+            if(pageTR[i] == 1)
             {
-                if(pageTRow[i + 1] == pageTT)
+                if(pageTR[i + 1] == pageTT)
                 {
                     hits++;
-                    pageTRow[i + 2] = distance(inputsG.begin(), cur);
-                    lbEntryFound = true;
-                    break; // Exit the for() as we have a hit
+                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    entryE = true;
+                    break;
                 }
             }
         }
-        if(lbEntryFound== false)
+        if(entryE== false)
         {
-            bool lbEntryInputted = false;
-            for(int i = 0; i < lnCacheRowLength; i += lnCacheRowLength / entriesA)
+            bool entryEn = false;
+            for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
             {
-                if(pageTRow[i] == 0)
+                if(pageTR[i] == 0)
                 {
-                    pageTRow[i] = 1;
-                    pageTRow[i + 1] = pageTT;
-                    pageTRow[i + 2] = distance(inputsG.begin(), cur);
-                    lbEntryInputted = true;
+                    pageTR[i] = 1;
+                    pageTR[i + 1] = pageTT;
+                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    entryEn = true;
                     break;
                 }
             }
 
-            if(lbEntryInputted == false)
+            if(entryEn == false)
             {
-                int lnLeastRecentlyUsedIndex = 0;
-                int lnMinDistance = INT32_MAX;
-                for(int i = 0; i < lnCacheRowLength; i += lnCacheRowLength / entriesA)
+                int usable = 0;
+                int distM = INT32_MAX;
+                for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
                 {
-                    if(pageTRow[i + 2] < lnMinDistance)
+                    if(pageTR[i + 2] < distM)
                     {
-                        lnMinDistance = pageTRow[i + 2];
-                        lnLeastRecentlyUsedIndex = i;
+                        distM = pageTR[i + 2];
+                        usable = i;
                     }
                 }
-                pageTRow[lnLeastRecentlyUsedIndex + 1] = pageTT;
-                pageTRow[lnLeastRecentlyUsedIndex + 2] = distance(inputsG.begin(), cur);
+                pageTR[usable + 1] = pageTT;
+                pageTR[usable + 2] = distance(inputsG.begin(), cur);
             }
         }
     }
@@ -159,90 +159,90 @@ int Cache::assocL()
 
 int Cache::assocH()
 {
-    const int lnWayCount = 512;
+    const int wayT = 512;
     hits = 0;
-    int *pageT = new int[lnWayCount];
-    int *lanHotColdTable = new int[lnWayCount];
+    int *pageT = new int[wayT];
+    int *tableL = new int[wayT];
 
-    for(int i = 0; i < lnWayCount; i++)
+    for(int i = 0; i < wayT; i++)
     {
         pageT[i] = 0;
-        lanHotColdTable[i] = 0;
+        tableL[i] = 0;
     }
 
     for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
     {
         int pageTT = cur->second >> (int)(log2(BLOCK_SIZE));
-        bool lbEntryFound = false;
+        bool entryE = false;
 
-        for(int i = 0; i < lnWayCount; i++)
+        for(int i = 0; i < wayT; i++)
         {
             if(pageT[i] == pageTT)
             {
                 hits++;
-                int lnParent = 0;
-                for(int lnRaise = 0; lnRaise < log2(lnWayCount); lnRaise++)
+                int parent = 0;
+                for(int increase = 0; increase < log2(wayT); increase++)
                 {
-                    int lnOldValue = (i/(lnWayCount/(2 << lnRaise))) % 2;
+                    int prevV = (i/(wayT/(2 << increase))) % 2;
 
-                    if(lnOldValue == 0)
+                    if(prevV == 0)
                     {
-                        lanHotColdTable[lnParent] = 1;
-                        lnParent = (2 * lnParent) + 1;
+                        tableL[parent] = 1;
+                        parent = (2 * parent) + 1;
                     }
                     else
                     {
-                        lanHotColdTable[lnParent] = 0;
-                        lnParent = 2 * (lnParent + 1);
+                        tableL[parent] = 0;
+                        parent = 2 * (parent + 1);
                     }
                 }
 
-                lbEntryFound = true;
+                entryE = true;
                 break;
             }
         }
-        if(lbEntryFound== false)
+        if(entryE== false)
         {
-            int lnIndexToReplace = 0;
+            int replaceI = 0;
 
-            for(int i = 0; i < log2(lnWayCount); i++)
+            for(int i = 0; i < log2(wayT); i++)
             {
-                if(lanHotColdTable[lnIndexToReplace] == 0)
+                if(tableL[replaceI] == 0)
                 {
-                    lanHotColdTable[lnIndexToReplace] = 1;
-                    lnIndexToReplace = (2 * lnIndexToReplace) + 1;
+                    tableL[replaceI] = 1;
+                    replaceI = (2 * replaceI) + 1;
                 }
                 else
                 {
-                    lanHotColdTable[lnIndexToReplace] = 0;
-                    lnIndexToReplace = 2 * (lnIndexToReplace + 1);
+                    tableL[replaceI] = 0;
+                    replaceI = 2 * (replaceI + 1);
                 }
             }
 
-            lnIndexToReplace = lnIndexToReplace + 1 - lnWayCount;
-            pageT[lnIndexToReplace] = pageTT;
+            replaceI = replaceI + 1 - wayT;
+            pageT[replaceI] = pageTT;
         }
     }
 
     delete[] pageT;
-    delete[] lanHotColdTable;
+    delete[] tableL;
     return hits;
 }
 
 int Cache::writeM(int entriesA)
 {
     const int cacheR = 512 / entriesA;
-    const int lnCacheRowLength = 3 * entriesA;
+    const int cacheRL = 3 * entriesA;
     hits = 0;
     int **pageT = new int*[cacheR];
 
     for(int i = 0; i < cacheR; i++)
     {
-        pageT[i] = new int[lnCacheRowLength];
+        pageT[i] = new int[cacheRL];
     }
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < lnCacheRowLength; j++)
+        for(int j = 0; j < cacheRL; j++)
         {
             pageT[i][j] = 0;
         }
@@ -255,58 +255,58 @@ int Cache::writeM(int entriesA)
         int blockA = floor(cur->second / BLOCK_SIZE);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
-        int *pageTRow = pageT[pageL];
-        bool lbEntryFound = false;
+        int *pageTR = pageT[pageL];
+        bool entryE = false;
 
-        for(int i = 0; i < lnCacheRowLength; i += lnCacheRowLength / entriesA)
+        for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
         {
-            if(pageTRow[i] == 1)
+            if(pageTR[i] == 1)
             {
-                if(pageTRow[i + 1] == pageTT)
+                if(pageTR[i + 1] == pageTT)
                 {
                     hits++;
-                    pageTRow[i + 2] = distance(inputsG.begin(), cur);
-                    lbEntryFound = true;
-                    break; // Exit the for() as we have a hit
+                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    entryE = true;
+                    break;
                 }
             }
         }
-        if(lbEntryFound== false)
+        if(entryE== false)
         {
-            bool lbEntryInputted = false;
+            bool entryEn = false;
 
             if(cur->first == 'S')
             {
-                lbEntryInputted = true;
+                entryEn = true;
             }
 
-            for(int i = 0; i < lnCacheRowLength && lbEntryInputted == false; i += lnCacheRowLength / entriesA)
+            for(int i = 0; i < cacheRL && entryEn == false; i += cacheRL / entriesA)
             {
-                if(pageTRow[i] == 0)
+                if(pageTR[i] == 0)
                 {
-                    pageTRow[i] = 1;
-                    pageTRow[i + 1] = pageTT;
-                    pageTRow[i + 2] = distance(inputsG.begin(), cur);
-                    lbEntryInputted = true;
+                    pageTR[i] = 1;
+                    pageTR[i + 1] = pageTT;
+                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    entryEn = true;
                     break;
                 }
             }
 
-            if(lbEntryInputted == false)
+            if(entryEn == false)
             {
-                int lnLeastRecentlyUsedIndex = 0;
-                int lnMinDistance = INT32_MAX;
+                int usable = 0;
+                int distM = INT32_MAX;
 
-                for(int i = 0; i < lnCacheRowLength; i += lnCacheRowLength / entriesA)
+                for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
                 {
-                    if(pageTRow[i + 2] < lnMinDistance)
+                    if(pageTR[i + 2] < distM)
                     {
-                        lnMinDistance = pageTRow[i + 2];
-                        lnLeastRecentlyUsedIndex = i;
+                        distM = pageTR[i + 2];
+                        usable = i;
                     }
                 }
-                pageTRow[lnLeastRecentlyUsedIndex + 1] = pageTT;
-                pageTRow[lnLeastRecentlyUsedIndex + 2] = distance(inputsG.begin(), cur);
+                pageTR[usable + 1] = pageTT;
+                pageTR[usable + 2] = distance(inputsG.begin(), cur);
             }
         }
     }
@@ -322,18 +322,18 @@ int Cache::writeM(int entriesA)
 
 int Cache::prefetchingOM(int entriesA){
     const int cacheR = 512 / entriesA;
-    const int lnCacheRowLength = 2 * entriesA;
+    const int cacheRL = 2 * entriesA;
     hits = 0;
     int **pageT = new int*[cacheR];
 
     for(int i = 0; i < cacheR; i++)
     {
-        pageT[i] = new int[lnCacheRowLength];
+        pageT[i] = new int[cacheRL];
     }
     auto cur = inputsG.begin();
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < lnCacheRowLength; j += 2)
+        for(int j = 0; j < cacheRL; j += 2)
         {
             pageT[i][j] = cur->second;
             pageT[i][j+1] = -1;
@@ -347,67 +347,67 @@ int Cache::prefetchingOM(int entriesA){
         int blockA = floor(cur->second / BLOCK_SIZE);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
-        int lnPreFetchPTIndex = (blockA + 1) % cacheR;
-        int lnPreFetchPTTag = (cur->second + BLOCK_SIZE) >> offset;
-        int *pageTRow = pageT[pageL];
-        int *lanPreFetchPTR = pageT[lnPreFetchPTIndex];
-        bool lbEntryFound = false;
-        bool lbPreFetchEntryFound = false;
+        int prefetchI = (blockA + 1) % cacheR;
+        int prefTT = (cur->second + BLOCK_SIZE) >> offset;
+        int *pageTR = pageT[pageL];
+        int *prefP = pageT[prefetchI];
+        bool entryE = false;
+        bool entryF = false;
 
-        for(int i = 0; i < lnCacheRowLength; i += 2)
+        for(int i = 0; i < cacheRL; i += 2)
         {
-            if(pageTRow[i] == pageTT)
+            if(pageTR[i] == pageTT)
             {
                 hits++;
-                pageTRow[i + 1] = distance(inputsG.begin(), cur);
-                lbEntryFound = true;
-                break; // Exit the for() as we have a hit
-            }
-        }
-
-        for(int i = 0; i < lnCacheRowLength; i += 2)
-        {
-            if(lanPreFetchPTR[i] == lnPreFetchPTTag)
-            {
-                lanPreFetchPTR[i + 1] = distance(inputsG.begin(), cur);
-                lbPreFetchEntryFound = true;
+                pageTR[i + 1] = distance(inputsG.begin(), cur);
+                entryE = true;
                 break;
             }
         }
-        if(lbEntryFound== false)
-        {
-            int lnIndexToReplaceValue = pageTRow[1];
-            int lnIndexToReplace = 0;
 
-            for(int i = 0; i < lnCacheRowLength; i += 2)
+        for(int i = 0; i < cacheRL; i += 2)
+        {
+            if(prefP[i] == prefTT)
             {
-                if(pageTRow[i+1] < lnIndexToReplaceValue)
+                prefP[i + 1] = distance(inputsG.begin(), cur);
+                entryF = true;
+                break;
+            }
+        }
+        if(entryE== false)
+        {
+            int replaceIV = pageTR[1];
+            int replaceI = 0;
+
+            for(int i = 0; i < cacheRL; i += 2)
+            {
+                if(pageTR[i+1] < replaceIV)
                 {
-                    lnIndexToReplaceValue = pageTRow[i+1];
-                    lnIndexToReplace = i;
+                    replaceIV = pageTR[i+1];
+                    replaceI = i;
                 }
             }
 
-            pageTRow[lnIndexToReplace] = pageTT;
-            pageTRow[lnIndexToReplace + 1] = distance(inputsG.begin(), cur);
+            pageTR[replaceI] = pageTT;
+            pageTR[replaceI + 1] = distance(inputsG.begin(), cur);
         }
 
-        if(lbPreFetchEntryFound== false)
+        if(entryF== false)
         {
-            int lnIndexToReplaceValue = lanPreFetchPTR[1];
-            int lnIndexToReplace = 0;
+            int replaceIV = prefP[1];
+            int replaceI = 0;
 
-            for(int i = 0; i < lnCacheRowLength; i += 2)
+            for(int i = 0; i < cacheRL; i += 2)
             {
-                if(lanPreFetchPTR[i+1] < lnIndexToReplaceValue)
+                if(prefP[i+1] < replaceIV)
                 {
-                    lnIndexToReplaceValue = lanPreFetchPTR[i+1];
-                    lnIndexToReplace = i;
+                    replaceIV = prefP[i+1];
+                    replaceI = i;
                 }
             }
 
-            lanPreFetchPTR[lnIndexToReplace] = lnPreFetchPTTag;
-            lanPreFetchPTR[lnIndexToReplace + 1] = distance(inputsG.begin(), cur);
+            prefP[replaceI] = prefTT;
+            prefP[replaceI + 1] = distance(inputsG.begin(), cur);
         }
     }
     for(int i = 0; i < cacheR; i++)
@@ -421,18 +421,18 @@ int Cache::prefetchingOM(int entriesA){
 
 int Cache::setP(int entriesA){
     const int cacheR = 512 / entriesA;
-    const int lnCacheRowLength = 2 * entriesA;
+    const int cacheRL = 2 * entriesA;
     hits = 0;
     int **pageT = new int*[cacheR];
 
     for(int i = 0; i < cacheR; i++)
     {
-        pageT[i] = new int[lnCacheRowLength];
+        pageT[i] = new int[cacheRL];
     }
     auto cur = inputsG.begin();
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < lnCacheRowLength; j += 2)
+        for(int j = 0; j < cacheRL; j += 2)
         {
             pageT[i][j] = cur->second;
             pageT[i][j+1] = -1;
@@ -444,70 +444,70 @@ int Cache::setP(int entriesA){
 
     for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
     {
+        bool entryE = false;
+        bool entryF = false;
         int blockA = floor(cur->second / BLOCK_SIZE);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
-        int lnPreFetchPTIndex = (blockA + 1) % cacheR;
-        int lnPreFetchPTTag = (cur->second + BLOCK_SIZE) >> offset;
-        int *pageTRow = pageT[pageL];
-        int *lanPreFetchPTR = pageT[lnPreFetchPTIndex];
-        bool lbEntryFound = false;
-        bool lbPreFetchEntryFound = false;
+        int prefetchI = (blockA + 1) % cacheR;
+        int prefTT = (cur->second + BLOCK_SIZE) >> offset;
+        int *pageTR = pageT[pageL];
+        int *prefP = pageT[prefetchI];
 
-        for(int i = 0; i < lnCacheRowLength; i += 2)
+        for(int i = 0; i < cacheRL; i += 2)
         {
-            if(pageTRow[i] == pageTT)
+            if(pageTR[i] == pageTT)
             {
                 hits++;
-                pageTRow[i + 1] = distance(inputsG.begin(), cur);
-                lbEntryFound = true;
-                break; // Exit the for() as we have a hit
+                pageTR[i + 1] = distance(inputsG.begin(), cur);
+                entryE = true;
+                break;
             }
         }
-        if(lbEntryFound== false)
+        if(entryE== false)
         {
-            for(int i = 0; i < lnCacheRowLength; i += 2)
+            for(int i = 0; i < cacheRL; i += 2)
             {
-                if(lanPreFetchPTR[i] == lnPreFetchPTTag)
+                if(prefP[i] == prefTT)
                 {
-                    lanPreFetchPTR[i + 1] = distance(inputsG.begin(), cur);
-                    lbPreFetchEntryFound = true;
+                    prefP[i + 1] = distance(inputsG.begin(), cur);
+                    entryF = true;
                     break;
                 }
             }
 
-            int lnIndexToReplaceValue = pageTRow[1];
-            int lnIndexToReplace = 0;
+            int replaceIV = pageTR[1];
+            int replaceI = 0;
 
-            for(int i = 0; i < lnCacheRowLength; i += 2)
+            for(int i = 0; i < cacheRL; i += 2)
             {
-                if(pageTRow[i+1] < lnIndexToReplaceValue)
+                if(pageTR[i+1] < replaceIV)
                 {
-                    lnIndexToReplaceValue = pageTRow[i+1];
-                    lnIndexToReplace = i;
+                    replaceIV = pageTR[i+1];
+                    replaceI = i;
                 }
             }
 
-            pageTRow[lnIndexToReplace] = pageTT;
-            pageTRow[lnIndexToReplace + 1] = distance(inputsG.begin(), cur);
+            pageTR[replaceI] = pageTT;
+            pageTR[replaceI + 1] = distance(inputsG.begin(), cur);
         }
 
-        if(lbPreFetchEntryFound== false && lbEntryFound== false)
+        if(entryF== false && entryE== false)
         {
-            int lnIndexToReplaceValue = lanPreFetchPTR[1];
-            int lnIndexToReplace = 0;
+            int replaceIV = prefP[1];
+            int replaceI = 0;
 
-            for(int i = 0; i < lnCacheRowLength; i += 2)
+            for(int i = 0; i < cacheRL; i += 2)
             {
-                if(lanPreFetchPTR[i+1] < lnIndexToReplaceValue)
+                if(prefP[i+1] < replaceIV)
                 {
-                    lnIndexToReplaceValue = lanPreFetchPTR[i+1];
-                    lnIndexToReplace = i;
+                    replaceIV = prefP[i+1];
+                    replaceI = i;
                 }
             }
 
-            lanPreFetchPTR[lnIndexToReplace] = lnPreFetchPTTag;
-            lanPreFetchPTR[lnIndexToReplace + 1] = distance(inputsG.begin(), cur);
+            prefP[replaceI] = prefTT;
+            prefP[replaceI + 1] = distance(inputsG.begin(), cur);
         }
     }
 
