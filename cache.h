@@ -1,12 +1,19 @@
 #ifndef Cache_H
 #define Cache_H
 
-#include <vector>
-#include <utility>
-#include <string>
 #include <iostream>
-
-#define String std::string
+#include <fstream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <cstdlib>
+#include <chrono>
+#include <algorithm>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <bits/stdc++.h>
+#include <utility>
 
 using namespace std;
 
@@ -14,17 +21,17 @@ class Cache
 {
 	public:
         Cache(vector< pair<char, int> >);
-        int getCountEntries();
-        int directMapped(int);
-        int setAssociative(int);
-	    int fullAssociativeLRU();
-        int fullAssociativeHCR();
-		int noAllocWriteMiss(int);
-        int setAssociativePrefetching(int);
-		int setAssociativePreOnMiss(int);
+        int entryC();
+        int dirM(int);
+        int setA(int);
+	    int assocL();
+        int assocH();
+		int writeM(int);
+        int prefetchingOM(int);
+		int setP(int);
 
     private:
-        vector< pair<char, int> > gooInputs;
+        vector< pair<char, int> > inputsG;
 };
 
 #endif
