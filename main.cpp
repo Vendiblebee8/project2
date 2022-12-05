@@ -12,10 +12,81 @@
 #include <bits/stdc++.h>
 #include "cache.h"
 
-
 using namespace std;
+vector<int> tableS = {32, 128, 512, 1024};
+vector<int> assocN = {2, 4, 8, 16};
 
-void Simulator(Cache cacheI, string Output);
+void Simulator(Cache cacheI, string Output)
+{
+    ofstream outputS(Output);
+    if (outputS.is_open()==false)
+    {
+        exit(2);
+    }
+
+    // Direct-Mapped Cache
+    for (int i = 0; i < tableS.size(); i++)
+    {
+        if((i == tableS.size() - 1)){
+            outputS << cacheI.dirM(tableS.at(i)) << "," << cacheI.entryC()<< ";";
+        }
+        else{
+            outputS << cacheI.dirM(tableS.at(i)) << "," << cacheI.entryC()<< "; ";
+        }
+    }
+    outputS << endl;
+
+    // setP
+    for (int i = 0; i < assocN.size(); i++)
+    {
+        if((i == tableS.size() - 1)){
+            outputS << cacheI.setA(assocN.at(i)) << "," << cacheI.entryC()<< ";";
+        }
+        else{
+            outputS << cacheI.setA(assocN.at(i)) << "," << cacheI.entryC()<< "; ";
+        }
+    }
+    outputS << endl;
+
+    // Fully-Associative cache
+    outputS << cacheI.assocL() << "," << cacheI.entryC() << ";" << endl;
+    outputS << cacheI.assocH() << "," << cacheI.entryC() << ";" << endl;
+
+    // Set-Associative Cache with no Allocation on a Write Miss
+    for (int i = 0; i < assocN.size(); i++)
+    {
+        if((i == tableS.size() - 1)){
+            outputS << cacheI.writeM(assocN.at(i)) << "," << cacheI.entryC()<< ";";
+        }
+        else{
+            outputS << cacheI.writeM(assocN.at(i)) << "," << cacheI.entryC()<< "; ";
+        }
+    }
+    outputS << endl;
+
+    // Set-Associative Cache with Next-line Prefetching
+    for (int i = 0; i < assocN.size(); i++)
+    {
+        if((i == tableS.size() - 1)){
+            outputS << cacheI.prefetchingOM(assocN.at(i)) << "," << cacheI.entryC()<< ";";
+        }
+        else{
+            outputS << cacheI.prefetchingOM(assocN.at(i)) << "," << cacheI.entryC()<< "; ";
+        }
+    }
+    outputS << endl;
+    for (int i = 0; i < assocN.size(); i++)
+    {
+        if((i == tableS.size() - 1)){
+            outputS << cacheI.setP(assocN.at(i)) << "," << cacheI.entryC()<< ";";
+        }
+        else{
+            outputS << cacheI.setP(assocN.at(i)) << "," << cacheI.entryC()<< "; ";
+        }
+    }
+    outputS << endl;
+    outputS.close();
+}
 
 int main(int argc, char *argv[])
 {
@@ -27,14 +98,14 @@ int main(int argc, char *argv[])
     }
 
     ifstream inputF(argv[1]);
-	string lsLine;
+	string line;
 
 	if (inputF.is_open())
 	{
-		while (getline(inputF, lsLine))
+		while (getline(inputF, line))
 		{
-			char actionL = lsLine.at(0);
-			string addressL = lsLine.substr(2);
+			char actionL = line.at(0);
+			string addressL = line.substr(2);
 			unsigned int addressH = stoul(addressL, nullptr, 16);
 
 			vectorI.push_back(pair<char, int>(actionL, addressH));
@@ -53,52 +124,3 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void Simulator(Cache cacheI, string Output)
-{
-    vector<int> tableS = {32, 128, 512, 1024};
-    vector<int> assocN = {2, 4, 8, 16};
-
-    ofstream outputS(Output);
-    if (outputS.is_open()==false)
-    {
-        exit(2);
-    }
-
-    // Direct-Mapped Cache
-    for (int i = 0; i < tableS.size(); i++)
-    {
-        outputS << cacheI.dirM(tableS.at(i)) << "," << cacheI.entryC()<< ((i == tableS.size() - 1) ? ";" : "; ");
-    }
-    outputS << endl;
-
-    // setP
-    for (int i = 0; i < assocN.size(); i++)
-    {
-        outputS << cacheI.setA(assocN.at(i)) << "," << cacheI.entryC()<< ((i == tableS.size() - 1) ? ";" : "; ");
-    }
-    outputS << endl;
-
-    // Fully-Associative cache
-    outputS << cacheI.assocL() << "," << cacheI.entryC() << ";" << endl;
-    outputS << cacheI.assocH() << "," << cacheI.entryC() << ";" << endl;
-
-    // Set-Associative Cache with no Allocation on a Write Miss
-    for (int i = 0; i < assocN.size(); i++)
-    {
-        outputS << cacheI.writeM(assocN.at(i)) << "," << cacheI.entryC()<< ((i == tableS.size() - 1) ? ";" : "; ");
-    }
-    outputS << endl;
-
-    // Set-Associative Cache with Next-line Prefetching
-    for (int i = 0; i < assocN.size(); i++)
-    {
-        outputS << cacheI.prefetchingOM(assocN.at(i)) << "," << cacheI.entryC()<< ((i == tableS.size() - 1) ? ";" : "; ");
-    }
-    outputS << endl;
-    for (int i = 0; i < assocN.size(); i++)
-    {
-        outputS << cacheI.setP(assocN.at(i)) << "," << cacheI.entryC()<< ((i == tableS.size() - 1) ? ";" : "; ");
-    }
-    outputS << endl;
-    outputS.close();
-}

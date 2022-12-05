@@ -14,8 +14,7 @@
 #include <cmath>
 #include <climits>
 
-#define BLOCK_SIZE 32
-
+#define BLOCKS 32
 int hits=0;
 int replaceI = 0;
 
@@ -41,10 +40,10 @@ int Cache::dirM(int cacheE){
             pageT[i][j] = 0;
         }
     }
-    int offset = (int)(log2(cacheE) + log2(BLOCK_SIZE));
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    int offset = (int)(log2(cacheE) + log2(BLOCKS));
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
-        int blockA = floor(cur->second / BLOCK_SIZE);
+        int blockA = (int)(cur->second / BLOCKS);
         int pageL = blockA % cacheE;
         int pageTT = cur->second >> offset;
         if(pageT[pageL][0] == 1)
@@ -91,15 +90,15 @@ int Cache::setA(int entriesA){
             pageT[i][j] = 0;
         }
     }
-    int offset = (int)(log2(cacheR) + log2(BLOCK_SIZE));
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    int offset = (int)(log2(cacheR) + log2(BLOCKS));
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
-        int blockA = floor(cur->second / BLOCK_SIZE);
+        int blockA = (int)(cur->second / BLOCKS);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
         int *pageTR = pageT[pageL];
         bool entryE = false;
-        for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
+        for(int i = 0; i < cacheRL; i = i + cacheRL / entriesA)
         {
             if(pageTR[i] == 1)
             {
@@ -115,7 +114,7 @@ int Cache::setA(int entriesA){
         if(entryE== false)
         {
             bool entryEn = false;
-            for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
+            for(int i = 0; i < cacheRL; i = i + cacheRL / entriesA)
             {
                 if(pageTR[i] == 0)
                 {
@@ -131,7 +130,7 @@ int Cache::setA(int entriesA){
             {
                 int usable = 0;
                 int distM = INT32_MAX;
-                for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
+                for(int i = 0; i < cacheRL; i = i + cacheRL / entriesA)
                 {
                     if(pageTR[i + 2] < distM)
                     {
@@ -171,9 +170,9 @@ int Cache::assocH()
         tableL[i] = 0;
     }
 
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
-        int pageTT = cur->second >> (int)(log2(BLOCK_SIZE));
+        int pageTT = cur->second >> (int)(log2(BLOCKS));
         bool entryE = false;
 
         for(int i = 0; i < wayT; i++)
@@ -249,17 +248,17 @@ int Cache::writeM(int entriesA)
         }
     }
 
-    int offset = (int)(log2(cacheR) + log2(BLOCK_SIZE));
+    int offset = (int)(log2(cacheR) + log2(BLOCKS));
 
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
-        int blockA = floor(cur->second / BLOCK_SIZE);
+        int blockA = (int)(cur->second / BLOCKS);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
         int *pageTR = pageT[pageL];
         bool entryE = false;
 
-        for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
+        for(int i = 0; i < cacheRL; i = i + cacheRL / entriesA)
         {
             if(pageTR[i] == 1)
             {
@@ -281,7 +280,7 @@ int Cache::writeM(int entriesA)
                 entryEn = true;
             }
 
-            for(int i = 0; i < cacheRL && entryEn == false; i += cacheRL / entriesA)
+            for(int i = 0; i < cacheRL && entryEn == false; i = i + cacheRL / entriesA)
             {
                 if(pageTR[i] == 0)
                 {
@@ -298,7 +297,7 @@ int Cache::writeM(int entriesA)
                 int usable = 0;
                 int distM = INT32_MAX;
 
-                for(int i = 0; i < cacheRL; i += cacheRL / entriesA)
+                for(int i = 0; i < cacheRL; i = i + cacheRL / entriesA)
                 {
                     if(pageTR[i + 2] < distM)
                     {
@@ -334,7 +333,7 @@ int Cache::prefetchingOM(int entriesA){
     auto cur = inputsG.begin();
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < cacheRL; j += 2)
+        for(int j = 0; j < cacheRL; j = j + 2)
         {
             pageT[i][j] = cur->second;
             pageT[i][j+1] = -1;
@@ -342,20 +341,20 @@ int Cache::prefetchingOM(int entriesA){
         }
     }
 
-    int offset = (int)(log2(cacheR) + log2(BLOCK_SIZE));
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    int offset = (int)(log2(cacheR) + log2(BLOCKS));
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
-        int blockA = floor(cur->second / BLOCK_SIZE);
+        int blockA = (int)(cur->second / BLOCKS);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
         int prefetchI = (blockA + 1) % cacheR;
-        int prefTT = (cur->second + BLOCK_SIZE) >> offset;
+        int prefTT = (cur->second + BLOCKS) >> offset;
         int *pageTR = pageT[pageL];
         int *prefP = pageT[prefetchI];
         bool entryE = false;
         bool entryF = false;
 
-        for(int i = 0; i < cacheRL; i += 2)
+        for(int i = 0; i < cacheRL; i = i+ 2)
         {
             if(pageTR[i] == pageTT)
             {
@@ -366,7 +365,7 @@ int Cache::prefetchingOM(int entriesA){
             }
         }
 
-        for(int i = 0; i < cacheRL; i += 2)
+        for(int i = 0; i < cacheRL; i = i+ 2)
         {
             if(prefP[i] == prefTT)
             {
@@ -380,7 +379,7 @@ int Cache::prefetchingOM(int entriesA){
             int replaceIV = pageTR[1];
             replaceI= 0;
 
-            for(int i = 0; i < cacheRL; i += 2)
+            for(int i = 0; i < cacheRL; i = i+ 2)
             {
                 if(pageTR[i+1] < replaceIV)
                 {
@@ -398,7 +397,7 @@ int Cache::prefetchingOM(int entriesA){
             int replaceIV = prefP[1];
             replaceI= 0;
 
-            for(int i = 0; i < cacheRL; i += 2)
+            for(int i = 0; i < cacheRL; i = i+ 2)
             {
                 if(prefP[i+1] < replaceIV)
                 {
@@ -433,7 +432,7 @@ int Cache::setP(int entriesA){
     auto cur = inputsG.begin();
     for(int i = 0; i < cacheR; i++)
     {
-        for(int j = 0; j < cacheRL; j += 2)
+        for(int j = 0; j < cacheRL; j = j + 2)
         {
             pageT[i][j] = cur->second;
             pageT[i][j+1] = -1;
@@ -441,21 +440,21 @@ int Cache::setP(int entriesA){
         }
     }
 
-    int offset = (int)(log2(cacheR) + log2(BLOCK_SIZE));
+    int offset = (int)(log2(cacheR) + log2(BLOCKS));
 
-    for(auto cur = inputsG.begin(); cur != inputsG.end(); cur++)
+    for(auto cur = inputsG.begin(); cur < inputsG.end(); cur++)
     {
         bool entryE = false;
         bool entryF = false;
-        int blockA = floor(cur->second / BLOCK_SIZE);
+        int blockA = (int)(cur->second / BLOCKS);
         int pageL = blockA % cacheR;
         int pageTT = cur->second >> offset;
         int prefetchI = (blockA + 1) % cacheR;
-        int prefTT = (cur->second + BLOCK_SIZE) >> offset;
+        int prefTT = (cur->second + BLOCKS) >> offset;
         int *pageTR = pageT[pageL];
         int *prefP = pageT[prefetchI];
 
-        for(int i = 0; i < cacheRL; i += 2)
+        for(int i = 0; i < cacheRL; i = i+ 2)
         {
             if(pageTR[i] == pageTT)
             {
@@ -467,7 +466,7 @@ int Cache::setP(int entriesA){
         }
         if(entryE== false)
         {
-            for(int i = 0; i < cacheRL; i += 2)
+            for(int i = 0; i < cacheRL; i = i+ 2)
             {
                 if(prefP[i] == prefTT)
                 {
@@ -480,7 +479,7 @@ int Cache::setP(int entriesA){
             int replaceIV = pageTR[1];
             replaceI= 0;
 
-            for(int i = 0; i < cacheRL; i += 2)
+            for(int i = 0; i < cacheRL; i = i + 2)
             {
                 if(pageTR[i+1] < replaceIV)
                 {
@@ -498,7 +497,7 @@ int Cache::setP(int entriesA){
             int replaceIV = prefP[1];
             replaceI= 0;
 
-            for(int i = 0; i < cacheRL; i += 2)
+            for(int i = 0; i < cacheRL; i = i + 2)
             {
                 if(prefP[i+1] < replaceIV)
                 {
