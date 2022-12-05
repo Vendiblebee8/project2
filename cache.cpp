@@ -17,6 +17,7 @@
 #define BLOCK_SIZE 32
 
 int hits=0;
+int replaceI = 0;
 
 Cache::Cache(vector<pair<char, int> > inputsA) : inputsG(inputsA){
 
@@ -105,7 +106,7 @@ int Cache::setA(int entriesA){
                 if(pageTR[i + 1] == pageTT)
                 {
                     hits++;
-                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    pageTR[i + 2] = cur - inputsG.begin();
                     entryE = true;
                     break;
                 }
@@ -120,7 +121,7 @@ int Cache::setA(int entriesA){
                 {
                     pageTR[i] = 1;
                     pageTR[i + 1] = pageTT;
-                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    pageTR[i + 2] = cur - inputsG.begin();
                     entryEn = true;
                     break;
                 }
@@ -139,7 +140,7 @@ int Cache::setA(int entriesA){
                     }
                 }
                 pageTR[usable + 1] = pageTT;
-                pageTR[usable + 2] = distance(inputsG.begin(), cur);
+                pageTR[usable + 2] = cur - inputsG.begin();
             }
         }
     }
@@ -203,7 +204,7 @@ int Cache::assocH()
         }
         if(entryE== false)
         {
-            int replaceI = 0;
+            replaceI= 0;
 
             for(int i = 0; i < log2(wayT); i++)
             {
@@ -265,7 +266,7 @@ int Cache::writeM(int entriesA)
                 if(pageTR[i + 1] == pageTT)
                 {
                     hits++;
-                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    pageTR[i + 2] = cur - inputsG.begin();
                     entryE = true;
                     break;
                 }
@@ -286,7 +287,7 @@ int Cache::writeM(int entriesA)
                 {
                     pageTR[i] = 1;
                     pageTR[i + 1] = pageTT;
-                    pageTR[i + 2] = distance(inputsG.begin(), cur);
+                    pageTR[i + 2] = cur - inputsG.begin();
                     entryEn = true;
                     break;
                 }
@@ -306,7 +307,7 @@ int Cache::writeM(int entriesA)
                     }
                 }
                 pageTR[usable + 1] = pageTT;
-                pageTR[usable + 2] = distance(inputsG.begin(), cur);
+                pageTR[usable + 2] = cur - inputsG.begin();
             }
         }
     }
@@ -359,7 +360,7 @@ int Cache::prefetchingOM(int entriesA){
             if(pageTR[i] == pageTT)
             {
                 hits++;
-                pageTR[i + 1] = distance(inputsG.begin(), cur);
+                pageTR[i + 1] = cur - inputsG.begin();
                 entryE = true;
                 break;
             }
@@ -369,7 +370,7 @@ int Cache::prefetchingOM(int entriesA){
         {
             if(prefP[i] == prefTT)
             {
-                prefP[i + 1] = distance(inputsG.begin(), cur);
+                prefP[i + 1] = cur - inputsG.begin();
                 entryF = true;
                 break;
             }
@@ -377,7 +378,7 @@ int Cache::prefetchingOM(int entriesA){
         if(entryE== false)
         {
             int replaceIV = pageTR[1];
-            int replaceI = 0;
+            replaceI= 0;
 
             for(int i = 0; i < cacheRL; i += 2)
             {
@@ -389,13 +390,13 @@ int Cache::prefetchingOM(int entriesA){
             }
 
             pageTR[replaceI] = pageTT;
-            pageTR[replaceI + 1] = distance(inputsG.begin(), cur);
+            pageTR[replaceI + 1] = cur - inputsG.begin();
         }
 
         if(entryF== false)
         {
             int replaceIV = prefP[1];
-            int replaceI = 0;
+            replaceI= 0;
 
             for(int i = 0; i < cacheRL; i += 2)
             {
@@ -407,7 +408,7 @@ int Cache::prefetchingOM(int entriesA){
             }
 
             prefP[replaceI] = prefTT;
-            prefP[replaceI + 1] = distance(inputsG.begin(), cur);
+            prefP[replaceI + 1] = cur - inputsG.begin();
         }
     }
     for(int i = 0; i < cacheR; i++)
@@ -459,7 +460,7 @@ int Cache::setP(int entriesA){
             if(pageTR[i] == pageTT)
             {
                 hits++;
-                pageTR[i + 1] = distance(inputsG.begin(), cur);
+                pageTR[i + 1] = cur - inputsG.begin();
                 entryE = true;
                 break;
             }
@@ -470,14 +471,14 @@ int Cache::setP(int entriesA){
             {
                 if(prefP[i] == prefTT)
                 {
-                    prefP[i + 1] = distance(inputsG.begin(), cur);
+                    prefP[i + 1] = cur - inputsG.begin();
                     entryF = true;
                     break;
                 }
             }
 
             int replaceIV = pageTR[1];
-            int replaceI = 0;
+            replaceI= 0;
 
             for(int i = 0; i < cacheRL; i += 2)
             {
@@ -489,13 +490,13 @@ int Cache::setP(int entriesA){
             }
 
             pageTR[replaceI] = pageTT;
-            pageTR[replaceI + 1] = distance(inputsG.begin(), cur);
+            pageTR[replaceI + 1] = cur - inputsG.begin();
         }
 
         if(entryF== false && entryE== false)
         {
             int replaceIV = prefP[1];
-            int replaceI = 0;
+            replaceI= 0;
 
             for(int i = 0; i < cacheRL; i += 2)
             {
@@ -507,7 +508,7 @@ int Cache::setP(int entriesA){
             }
 
             prefP[replaceI] = prefTT;
-            prefP[replaceI + 1] = distance(inputsG.begin(), cur);
+            prefP[replaceI + 1] = cur - inputsG.begin();
         }
     }
 
