@@ -3,117 +3,115 @@
 #include <string>
 #include <vector>
 #include <sstream>
-
+#include <cstdlib>
+#include <chrono>
+#include <algorithm>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <bits/stdc++.h>
 #include "cache.h"
 
-#define String std::string
 
 using namespace std;
 
-void runCacheSimulator(Caches aoCaches, String asOutputFileName);
+void Simulator(Cache cacheI, String Output);
 
 int main(int argc, char *argv[])
 {
-	vector< pair<char, int> > cooInputVector;
+	vector< pair<char, int> > vectorI;
 
     if (argc != 3)
     {
-        cerr << "Usage: ./cache-sim <input_file.txt> <output_file.txt>\n";
         exit(1);
     }
 
-    ifstream coInputFile(argv[1]);
+    ifstream inputF(argv[1]);
 	String lsLine;
 
-	if (coInputFile.is_open())
+	if (inputF.is_open())
 	{
-		while (getline(coInputFile, lsLine))
+		while (getline(inputF, lsLine))
 		{
-			char lsAction = lsLine.at(0); // "S"tore or "L"oad
-			String lsAddress = lsLine.substr(2); // 0x00000000 - 0xFFFFFFFF
-			unsigned int llHexAddress = stoul(lsAddress, nullptr, 16);
+			char actionL = lsLine.at(0);
+			String addressL = lsLine.substr(2);
+			unsigned int addressH = stoul(addressL, nullptr, 16);
 
-			cooInputVector.push_back(pair<char, int>(lsAction, llHexAddress));
+			vectorI.push_back(pair<char, int>(actionL, addressH));
 		}
 
-		coInputFile.close();
+		inputF.close();
 	}
 	else
 	{
-		cerr << "Error opening file " << argv[1] << "\n";
         exit(3);
 	}
 	
-    Caches loCaches(cooInputVector);
-    runCacheSimulator(loCaches, argv[2]);
+    Cache cacheL(vectorI);
+    Simulator(cacheL, argv[2]);
 
     return 0;
 }
 
-void runCacheSimulator(Caches aoCaches, String asOutputFileName)
+void Simulator(Cache cacheI, String Output)
 {
-    vector<int> lanTableRows = {32, 128, 512, 1024};
-    vector<int> lanAssociativity = {2, 4, 8, 16};
-    int loRetVal;
+    vector<int> tableS = {32, 128, 512, 1024};
+    vector<int> assocN = {2, 4, 8, 16};
+    int RV;
 
-    ofstream loOutputFile(asOutputFileName);
-    if (! loOutputFile.is_open())
+    ofstream outputS(Output);
+    if (!outputS.is_open())
     {
-        cerr << "Unable to open file " << asOutputFileName << "\n";
         exit(2);
     }
 
-    // Q1: Direct Mapped Cache of size 1KB, 4KB, 16KB, 32KB
-    for (int i = 0; i < lanTableRows.size(); i++)
+    // Direct-Mapped Cache
+    for (int i = 0; i < tableS.size(); i++)
     {
-        loRetVal = aoCaches.directMapped(lanTableRows.at(i));
-        loOutputFile << loRetVal << "," << aoCaches.getCountEntries();
-        loOutputFile << ((i == lanTableRows.size() - 1) ? ";" : "; ");
+        RV = cacheI.directMapped(tableS.at(i));
+        outputS << RV << "," << cacheI.getCountEntries();
+        outputS << ((i == tableS.size() - 1) ? ";" : "; ");
     }
-    loOutputFile << "\n";
+    outputS << endl;
 
-    // Q2: Set Associative Cache of associativity 2, 4, 8, 16
-    for (int i = 0; i < lanAssociativity.size(); i++)
+    // setAssociativePreOnMiss
+    for (int i = 0; i < assocN.size(); i++)
     {
-        loRetVal = aoCaches.setAssociative(lanAssociativity.at(i));
-        loOutputFile << loRetVal << "," << aoCaches.getCountEntries();
-        loOutputFile << ((i == lanTableRows.size() - 1) ? ";" : "; ");
+        RV = cacheI.setAssociative(assocN.at(i));
+        outputS << RV << "," << cacheI.getCountEntries();
+        outputS << ((i == tableS.size() - 1) ? ";" : "; ");
     }
-    loOutputFile << "\n";
+    outputS << endl;
 
-    // Q3a: Fully Associative Cache Least Recently Used (associativity of 512)
-    loRetVal = aoCaches.fullAssociativeLRU();
-    loOutputFile << loRetVal << "," << aoCaches.getCountEntries() << ";\n";
+    // Fully-Associative cache
+    RV = cacheI.fullAssociativeLRU();
+    outputS << RV << "," << cacheI.getCountEntries() << ";\n";
+    RV = cacheI.fullAssociativeHCR();
+    outputS << RV << "," << cacheI.getCountEntries() << ";\n";
 
-    // Q3b: Fully Associative Cache Hot/Cold Bits
-    loRetVal = aoCaches.fullAssociativeHCR();
-    loOutputFile << loRetVal << "," << aoCaches.getCountEntries() << ";\n";
-
-    // Q4: Set Associative Cache with no Allocation on a Write Miss
-    for (int i = 0; i < lanAssociativity.size(); i++)
+    // Set-Associative Cache with no Allocation on a Write Miss
+    for (int i = 0; i < assocN.size(); i++)
     {
-        loRetVal = aoCaches.noAllocWriteMiss(lanAssociativity.at(i));
-        loOutputFile << loRetVal << "," << aoCaches.getCountEntries();
-        loOutputFile << ((i == lanTableRows.size() - 1) ? ";" : "; ");
+        RV = cacheI.noAllocWriteMiss(assocN.at(i));
+        outputS << RV << "," << cacheI.getCountEntries();
+        outputS << ((i == tableS.size() - 1) ? ";" : "; ");
     }
-    loOutputFile << "\n";
+    outputS << endl;
 
-    // Q5: Set Associative Cache with Next-line Prefetching
-    for (int i = 0; i < lanAssociativity.size(); i++)
+    // Set-Associative Cache with Next-line Prefetching
+    for (int i = 0; i < assocN.size(); i++)
     {
-        loRetVal = aoCaches.setAssociativePrefetching(lanAssociativity.at(i));
-        loOutputFile << loRetVal << "," << aoCaches.getCountEntries();
-        loOutputFile << ((i == lanTableRows.size() - 1) ? ";" : "; ");
+        RV = cacheI.setAssociativePrefetching(assocN.at(i));
+        outputS << RV << "," << cacheI.getCountEntries();
+        outputS << ((i == tableS.size() - 1) ? ";" : "; ");
     }
-    loOutputFile << "\n";
-
-    // Q6: Prefetch-on-a-Miss
-    for (int i = 0; i < lanAssociativity.size(); i++)
+    outputS << endl;
+    for (int i = 0; i < assocN.size(); i++)
     {
-        loRetVal = aoCaches.setAssociativePreOnMiss(lanAssociativity.at(i));
-        loOutputFile << loRetVal << "," << aoCaches.getCountEntries();
-        loOutputFile << ((i == lanTableRows.size() - 1) ? ";" : "; ");
+        RV = cacheI.setAssociativePreOnMiss(assocN.at(i));
+        outputS << RV << "," << cacheI.getCountEntries();
+        outputS << ((i == tableS.size() - 1) ? ";" : "; ");
     }
-    loOutputFile << "\n";
-    loOutputFile.close();
+    outputS << endl;
+    outputS.close();
 }

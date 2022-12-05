@@ -4,17 +4,17 @@
 
 #define BLOCK_SIZE 32
 
-Caches::Caches(vector<pair<char, int> > aooInputs) : gooInputs(aooInputs)
+Cache::Cache(vector<pair<char, int> > aooInputs) : gooInputs(aooInputs)
 {
 
 }
 
-int Caches::getCountEntries()
+int Cache::getCountEntries()
 {
     return gooInputs.size();
 }
 
-int Caches::directMapped(int anCacheEntries)
+int Cache::directMapped(int anCacheEntries)
 {
     /*
      * Size = Indexes * Data.Size = anCacheEntries * 2^5 bytes
@@ -81,7 +81,7 @@ int Caches::directMapped(int anCacheEntries)
     return lnHit;
 }
 
-int Caches::setAssociative(int anAssociativityEntries)
+int Cache::setAssociative(int anAssociativityEntries)
 {
     /*
      * Set-Associative Cache.
@@ -192,7 +192,7 @@ int Caches::setAssociative(int anAssociativityEntries)
     return lnHit;
 }
 
-int Caches::fullAssociativeLRU()
+int Cache::fullAssociativeLRU()
 {
     /*
      * Fully-Associative cache.
@@ -204,7 +204,7 @@ int Caches::fullAssociativeLRU()
     return setAssociative(512);
 }
 
-int Caches::fullAssociativeHCR()
+int Cache::fullAssociativeHCR()
 {
     /*
      * Fully-Associative cache.
@@ -292,7 +292,7 @@ int Caches::fullAssociativeHCR()
     return lnHit;
 }
 
-int Caches::noAllocWriteMiss(int anAssociativityEntries)
+int Cache::noAllocWriteMiss(int anAssociativityEntries)
 {
     // In this design,
     // if a store instruction misses into the cache,
@@ -408,7 +408,7 @@ int Caches::noAllocWriteMiss(int anAssociativityEntries)
     return lnHit;
 }
 
-int Caches::setAssociativePrefetching(int anAssociativityEntries)
+int Cache::setAssociativePrefetching(int anAssociativityEntries)
 {
     // In this design,
     // the next memory line will be brought into the cache with every cache access.
@@ -530,7 +530,7 @@ int Caches::setAssociativePrefetching(int anAssociativityEntries)
     return lnHit;
 }
 
-int Caches::setAssociativePreOnMiss(int anAssociativityEntries)
+int Cache::setAssociativePreOnMiss(int anAssociativityEntries)
 {
     // 2^9 entries w/ 2^5 line size = 16KB cache
     const int lnCacheRowEntries = 512 / anAssociativityEntries;
@@ -641,92 +641,6 @@ int Caches::setAssociativePreOnMiss(int anAssociativityEntries)
         delete[] lanPageTable[i];
     }
     delete[] lanPageTable;
-
-    return lnHit;
-}
-
-int Caches::secondChanceClocking()
-{
-    /*
-     * https://oscourse.github.io/slides/page_replacement.pdf Slide 15
-     * The point of this replacement method is to have a list of entries and if one needs
-     * to be evicted we evict in order, but if the cache line was recently accessed we skip it
-     * and go onto the next one until we find one that was not recently accessed. If all of them
-     * were recently accessed, remove the starting element.
-     *
-     * This cache is still 16KB since we only store 512 entries (2^9) and the data size is 2^5
-     */
-
-    const int lnSetCount = 512;
-
-    // Row will be [TAG | REFERENCED | TAG | REFERENCED | ...]
-    const int lnCacheEntries = 2 * lnSetCount;
-
-    int lnHit = 0;
-
-    // Dynamic allocation of array
-    int *lanPageTable = new int[lnCacheEntries];
-
-    // Zero out new array
-    for (int j = 0; j < lnCacheEntries; j++)
-    {
-        lanPageTable[j] = 0;
-    }
-
-    // Index to start the "clock hand" at
-    int lnStartingIndex = 0;
-    int lnBitsToOffset = (int)(log2(lnSetCount) + log2(BLOCK_SIZE));
-    for (auto loIterator = gooInputs.begin(); loIterator != gooInputs.end(); loIterator++)
-    {
-        int lnBlockAddress = floor(loIterator->second / BLOCK_SIZE);
-        int lnPTIndex = lnBlockAddress % lnSetCount;
-        int lnPTTag = loIterator->second >> lnBitsToOffset;
-
-        bool lbEntryFound = false;
-        for (int i = 0; i < lnCacheEntries; i += 2)
-        {
-            if (lanPageTable[i] == lnPTTag)
-            {
-                lnHit++;
-                lanPageTable[i + 1] = 1;
-                lbEntryFound = true;
-                break; // Exit the for() as we have a hit
-            }
-        }
-
-        bool lbEntryInserted = false;
-        if (! lbEntryFound)
-        {
-            // Since we missed, we will resume from where the "clock hand" was and continue forward
-            // until we find a cache line that was not recently used. If all of them were recently
-            // used, we will evict the line at lnActualIndex.
-            for (int i = 0; i < lnCacheEntries; i += 2)
-            {
-                int lnActualIndex = (i + lnStartingIndex) % lnCacheEntries;
-
-                // If page was recently referenced
-                if (lanPageTable[lnActualIndex + 1] == 1)
-                {
-                    lanPageTable[lnActualIndex + 1] = 0;
-                }
-                else
-                {
-                    lanPageTable[lnActualIndex] = lnPTTag;
-                    lbEntryInserted = true;
-
-                    // Update the "clock hand" so it will resume from the next option if needed
-                    lnStartingIndex = (1 + lnActualIndex) % lnCacheEntries;
-                    break;
-                }
-            }
-        }
-
-        // This means we've exhausted the list, so we did a full clock spin.
-        if (! lbEntryInserted)
-        {
-            lanPageTable[lnStartingIndex] = lnPTTag;
-        }
-    }
 
     return lnHit;
 }
